@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "Runners.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,7 +17,11 @@ public:
     ~MainWindow();
 
 private:
+    static constexpr int NUM_COLUMNS = 4;
+
     Ui::MainWindow *ui;
+
+    Runners runners_;
 
 private slots:
     void onOpen(bool checked);

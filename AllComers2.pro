@@ -15,10 +15,16 @@ QXLSX_SOURCEPATH=./source/  # current QXlsx source path is ./source/
 include(./QXlsx.pri)
 
 SOURCES += \
+    Runner.cpp \
+    RunnerWidget.cpp \
+    Runners.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    Runner.h \
+    RunnerWidget.h \
+    Runners.h \
     mainwindow.h
 
 FORMS += \
