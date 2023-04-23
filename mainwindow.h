@@ -8,6 +8,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+class RunnerWidget;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -22,6 +24,9 @@ private:
     Ui::MainWindow *ui;
 
     Runners runners_;
+    std::list<RunnerWidget*> runnerWidgets_;
+
+    void redraw();
 
 private slots:
     void onOpen(bool checked);

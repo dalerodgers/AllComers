@@ -71,29 +71,37 @@ void MainWindow::onOpen(bool checked)
             row++;
         } while( nullptr != cell1 );
 
-        //runners_.sort();
-        ui->tableWidget->setRowCount( runners_.all().size() );
+        // ....................................................................
 
-        for( unsigned int row = 0; row < runners_.all().size(); row++ )
+        ui->tableWidget->setRowCount( runners_.all().size() );
+        row = 0;
+
+        auto all = runners_.all();
+        auto iter = all.begin();
+
+        while( iter != all.end() )
         {
             for( int col = 0; col < NUM_COLUMNS; col++ )
             {
-                ui->tableWidget->setItem( row, col, new RunnerWidget );
+                RunnerWidget* rw = new RunnerWidget;
+
+                rw->setRunner( &(*iter) );
+                runnerWidgets_.push_back( rw );
+                ui->tableWidget->setItem( row, col, rw );
+
+                if( col > 0 )
+                {
+                    ui->tableWidget->item( row, col )->setTextAlignment(Qt::AlignRight);
+                }
             }
+
+            row++;
+            iter++;
         }
 
-        //int row = 0;
-        //auto eric = runners_.notStarted();
-        //auto iter = eric.begin();
+        ui->tableWidget->verticalHeader()->hide();
 
-        //while( iter != eric.end() )
-        //{
-        //    ui->tableWidget->setItem( row, 0, new QTableWidgetItem( (*iter)->name() ) );
-        //    ui->tableWidget->setItem( row, 1, new QTableWidgetItem() );
-        //
-        //    row++;
-        //    iter++;
-        //}
+        redraw();
     }
 }
 
@@ -119,6 +127,33 @@ void MainWindow::onExit(bool checked)
 void MainWindow::onStartStopPressed()
 {
     qDebug() << "onStartStopPressed";
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::redraw()
+{
+    int row = 0;
+    runners_.sort();
+
+    // ........................................................................
+
+    auto notStarted = runners_.notStarted();
+    auto iter = notStarted.begin();
+
+    while( iter != notStarted.end() )
+    {
+        ui->tableWidget->item( row, 0 )->setText( (*iter)->name() );
+        ui->tableWidget->item( row, 0 )->setBackground(QtGui.QColor(125,125,125));
+
+        QTime time = QTime(0, 0, 0).addMSecs( (*iter)->msPredicted() );
+        ui->tableWidget->item( row, 1 )->setText( time.toString("hh:mm:ss") );
+
+        row++;
+        iter++;
+    }
+
+    // ........................................................................
 }
 
 ///////////////////////////////////////////////////////////////////////////////
