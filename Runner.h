@@ -18,6 +18,9 @@ public:
 
     Runner( const QString& name, const int msPredicted );
 
+    void Start();
+    void Stop( int msElpased );
+
     State_e state() const;
     const QString& name() const;
     int msPredicted() const;

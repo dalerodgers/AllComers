@@ -2,13 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+
 #include "Runners.h"
+#include <QTimer>
+#include <QTextToSpeech>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-
-class RunnerWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -20,13 +21,18 @@ public:
 
 private:
     static constexpr int NUM_COLUMNS = 4;
+    static constexpr int msFUDGE = 10000;
 
     Ui::MainWindow *ui;
 
+    bool isStarted_;
     Runners runners_;
-    std::list<RunnerWidget*> runnerWidgets_;
+    QTimer timer_;
+    QElapsedTimer elapsedTimer_;
+    int msSlowest_;
+    QTextToSpeech textToSpeech_;
 
-    void redraw();
+    void redraw(int ms = 0);
 
 private slots:
     void onOpen(bool checked);
@@ -34,5 +40,9 @@ private slots:
     void onExit(bool checked);
 
     void onStartStopPressed();
+
+    void onTimer();
+
+    void onCellPressed(int row, int column);
 };
 #endif // MAINWINDOW_H

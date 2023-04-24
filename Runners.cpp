@@ -54,6 +54,7 @@ void Runners::sort()
     }
 
     notStarted_.sort( &cmp_notStarted );
+    started_.sort( &cmp_names );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

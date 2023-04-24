@@ -39,3 +39,39 @@ int Runner::msElapsed() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+void Runner::Start()
+{
+    if( ( state_ == State_e::WAITIING_TO_START ) || \
+        ( state_ == State_e::FINISHED ) )
+    {
+        state_ = State_e::RUNNING;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Runner::Stop( int msElapsed )
+{
+    switch( state_ )
+    {
+        case State_e::WAITIING_TO_START:
+            state_ = State_e::DNS;
+            break;
+
+        case State_e::RUNNING:
+            state_ = State_e::FINISHED;
+            break;
+
+        case State_e::FINISHED:
+            state_ = State_e::RUNNING;
+            break;
+        case State_e::DNS:
+        case State_e::DNF:
+        default:
+            ; // do nothing
+            break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////

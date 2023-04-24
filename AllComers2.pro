@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui texttospeech
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,7 +16,6 @@ include(./QXlsx.pri)
 
 SOURCES += \
     Runner.cpp \
-    RunnerWidget.cpp \
     Runners.cpp \
     main.cpp \
     mainwindow.cpp
