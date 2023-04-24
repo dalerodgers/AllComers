@@ -20,6 +20,8 @@ void Runners::sort()
     notStarted_.clear();
     started_.clear();
     finished_.clear();
+    dns_.clear();
+    dnf_.clear();
 
     auto iter = all_.begin();
     while( iter != all_.end() )

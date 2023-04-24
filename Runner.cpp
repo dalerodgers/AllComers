@@ -54,12 +54,13 @@ void Runner::Stop( int msElapsed )
             break;
 
         case State_e::RUNNING:
-            state_ = State_e::FINISHED;
+            ( msElapsed > 0 ? state_ = State_e::FINISHED : state_ = State_e::DNF );
             break;
 
         case State_e::FINISHED:
-            state_ = State_e::RUNNING;
+            ( msElapsed > 0 ? state_ = State_e::RUNNING : state_ = State_e::FINISHED );
             break;
+
         case State_e::DNS:
         case State_e::DNF:
         default:

@@ -15,10 +15,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     connect( ui->actionOpen, SIGNAL(triggered(bool)), this, SLOT(onOpen(bool)) );
+
     connect( ui->actionSave, SIGNAL(triggered(bool)), this, SLOT(onSave(bool)) );
+    ui->actionSave->setEnabled( false );
+
     connect( ui->actionExit, SIGNAL(triggered(bool)), this, SLOT(onExit(bool)) );
 
     connect( ui->startStopButton, SIGNAL(pressed()), this, SLOT(onStartStopPressed()) );
+    ui->startStopButton->setEnabled( false );
 
     connect( ui->tableWidget, SIGNAL(cellPressed(int,int)), this, SLOT(onCellPressed(int,int)) );
 
@@ -105,6 +109,8 @@ void MainWindow::onOpen(bool checked)
         ui->tableWidget->verticalHeader()->hide();
 
         redraw();
+
+        ui->startStopButton->setEnabled( true );
     }
 }
 
@@ -142,6 +148,10 @@ void MainWindow::onStartStopPressed()
         isStarted_ = true;
         ui->startStopButton->setText( "Stop" );
 
+        ui->actionOpen->setEnabled( false );
+        ui->actionSave->setEnabled( false );
+        ui->actionExit->setEnabled( false );
+
         elapsedTimer_.start();
         timer_.start(50);
     }
@@ -149,7 +159,19 @@ void MainWindow::onStartStopPressed()
     {
         isStarted_ = false;
         ui->startStopButton->setText( "Start" );
-        timer_.stop();
+
+        std::list<Runner>& all = runners_.all();
+        auto iter = all.begin();
+
+        while( iter != all.end() )
+        {
+            iter->Stop( -1 );
+            iter++;
+        }
+
+        ui->actionOpen->setEnabled( true );
+        ui->actionSave->setEnabled( true );
+        ui->actionExit->setEnabled( true );
     }
 }
 
@@ -157,6 +179,11 @@ void MainWindow::onStartStopPressed()
 
 void MainWindow::onTimer()
 {
+    if( !isStarted_ )
+    {
+        timer_.stop();
+    }
+
     int t = msSlowest_ - elapsedTimer_.elapsed();
     QString s = QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
 
@@ -197,6 +224,8 @@ void MainWindow::onCellPressed(int row, int column)
             iter++;
         }
     }
+
+    ui->tableWidget->clearSelection();
 }
 
 ////////////////////////// /////////////////////////////////////////////////////
@@ -305,10 +334,7 @@ void MainWindow::redraw(int ms)
         time = QTime(0, 0, 0).addMSecs( (*dnsI)->msPredicted() );
         col2 = time.toString("hh:mm:ss");
 
-        int delta = (*dnsI)->msPredicted() - ms;
-
-        time = QTime(0, 0, 0).addMSecs( delta );
-        col3 = time.toString("hh:mm:ss");
+        col3 = "DNS";
 
         drawRow( row, Qt::gray, col1, col2, col3, col4 );
         (*dnsI)->setId( row );
@@ -319,7 +345,7 @@ void MainWindow::redraw(int ms)
 
     // ........................................................................
 
-    std::list<Runner*>& dnf = runners_.dns();
+    std::list<Runner*>& dnf = runners_.dnf();
     auto dnfI = dnf.begin();
 
     while( dnfI != dnf.end() )
@@ -329,12 +355,9 @@ void MainWindow::redraw(int ms)
         time = QTime(0, 0, 0).addMSecs( (*dnfI)->msPredicted() );
         col2 = time.toString("hh:mm:ss");
 
-        int delta = (*dnfI)->msPredicted() - ms;
+        col3 = "DNF";
 
-        time = QTime(0, 0, 0).addMSecs( delta );
-        col3 = time.toString("hh:mm:ss");
-
-        drawRow( row, Qt::gray, col1, col2, col3, col4 );
+        drawRow( row, Qt::lightGray, col1, col2, col3, col4 );
         (*dnfI)->setId( row );
 
         row++;
