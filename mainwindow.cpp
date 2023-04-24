@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( ui->startStopButton, SIGNAL(pressed()), this, SLOT(onStartStopPressed()) );
 
-    connect( ui->tableWidget, SIGNAL(cellPressed(int, int)), this, SLOT(onCellPressed(int, int)) );
+    connect( ui->tableWidget, SIGNAL(cellPressed(int,int)), this, SLOT(onCellPressed(int,int)) );
 
     connect( &timer_, SIGNAL(timeout()), this, SLOT(onTimer()) );
     timer_.stop();
@@ -176,45 +176,25 @@ void MainWindow::onCellPressed(int row, int column)
 {
     Q_UNUSED( column );
 
-    const std::list<Runner*> notStarted = runners_.notStarted();
-    const std::list<Runner*> started = runners_.started();
-    const std::list<Runner*> finished = runners_.finished();
-    const std::list<Runner*> dns = runners_.dns();
-    const std::list<Runner*> dnf = runners_.dnf();
+    std::list<Runner>& all = runners_.all();
+    auto iter = all.begin();
 
-    std::list< const std::list<Runner*>* > lists;
-    lists.push_back( &notStarted );
-    lists.push_back( &started );
-    lists.push_back( &finished );
-    lists.push_back( &dns );
-    lists.push_back( &dnf );
-
-    int r = 0;
-    std::list< const std::list<Runner*>* >::iterator iterO = lists.begin();
-    std::list<Runner*>::const_iterator iterI = (*iterO)->begin();
-
-    while( ( iterO != lists.end() ) && ( iterI != (*iterO)->end() ) )
+    while( iter != all.end() )
     {
-        if( r == row )
+        if( row == iter->id() )
         {
+            qDebug() << iter->name();
+
             if( isStarted_ )
             {
-                (*iterI)->Stop( elapsedTimer_.elapsed() );
+                iter->Stop( elapsedTimer_.elapsed() );
             }
 
-            iterI = (*iterO)->end();
-            iterO = lists.end();
+            iter = all.end();
         }
         else
         {
-            r++;
-            iterI++;
-        }
-
-        if( ( iterO != lists.end() ) && ( iterI == (*iterO)->end() ) )
-        {
-            iterO++;
-            iterI = (*iterO)->begin();
+            iter++;
         }
     }
 }
@@ -225,84 +205,65 @@ void MainWindow::redraw(int ms)
 {
     int row = 0;
     runners_.sort();
-    QTableWidgetItem* pTWI;
+    QString col1, col2, col3, col4;
+    QTime time;
 
     // ........................................................................
 
-    auto notStarted = runners_.notStarted();
-    auto iter = notStarted.begin();
+    std::list<Runner*>& notStarted = runners_.notStarted();
+    auto notStartedI = notStarted.begin();
 
-    while( iter != notStarted.end() )
+    while( notStartedI != notStarted.end() )
     {      
-        pTWI = ui->tableWidget->item( row, 0 );
-        pTWI->setText( (*iter)->name() );
-        pTWI->setBackground( Qt::yellow );
+        col1 = (*notStartedI)->name();
 
-        pTWI = ui->tableWidget->item( row, 1 );
-        QTime time = QTime(0, 0, 0).addMSecs( (*iter)->msPredicted() );
-        pTWI->setText( time.toString("hh:mm:ss") );
-        pTWI->setBackground( Qt::yellow );
+        time = QTime(0, 0, 0).addMSecs( (*notStartedI)->msPredicted() );
+        col2 = time.toString("hh:mm:ss");
 
-        pTWI = ui->tableWidget->item( row, 2 );
         if( isStarted_ )
         {
-            QString s;
-            int delta = (*iter)->msPredicted() - ms;
+            int delta = (*notStartedI)->msPredicted() - ms;
 
             if( delta >= 0 )
             {
-                (*iter)->Start();
-                textToSpeech_.say( (*iter)->name() );
+                (*notStartedI)->Start();
+                textToSpeech_.say( (*notStartedI)->name() );
             }
             else
             {
                 delta = -delta;
-                s = "-";
+                col3 = "-";
             }
 
             time = QTime(0, 0, 0).addMSecs( delta );
-            s += time.toString("hh:mm:ss");
-
-            pTWI->setText( s );
+            col3 += time.toString("hh:mm:ss");
         }
 
-        pTWI->setBackground( Qt::yellow );
-
-        pTWI = ui->tableWidget->item( row, 3 );
-        pTWI->setBackground( Qt::yellow );
+        drawRow( row, Qt::yellow, col1, col2, col3, col4 );
+        (*notStartedI)->setId( row );
 
         row++;
-        iter++;
+        notStartedI++;
     }
 
     // ........................................................................
 
-    auto started = runners_.started();
+    std::list<Runner*>& started = runners_.started();
     auto startedI = started.begin();
 
     while( startedI != started.end() )
     {
-        pTWI = ui->tableWidget->item( row, 0 );
-        pTWI->setText( (*startedI)->name() );
-        pTWI->setBackground( Qt::green );
+        col1 = (*startedI)->name();
 
-        pTWI = ui->tableWidget->item( row, 1 );
-        QTime time = QTime(0, 0, 0).addMSecs( (*startedI)->msPredicted() );
-        pTWI->setText( time.toString("hh:mm:ss") );
-        pTWI->setBackground( Qt::green );
+        time = QTime(0, 0, 0).addMSecs( (*startedI)->msPredicted() );
+        col2 = time.toString("hh:mm:ss");
 
-        pTWI = ui->tableWidget->item( row, 2 );
-        QString s;
         int delta = (*startedI)->msPredicted() - ms;
-
         time = QTime(0, 0, 0).addMSecs( delta );
-        s = time.toString("hh:mm:ss");
+        col3 = time.toString("hh:mm:ss");
 
-        pTWI->setText( s );
-        pTWI->setBackground( Qt::green );
-
-        pTWI = ui->tableWidget->item( row, 3 );
-        pTWI->setBackground( Qt::green );
+        drawRow( row, Qt::green, col1, col2, col3, col4 );
+        (*startedI)->setId( row );
 
         row++;
         startedI++;
@@ -310,35 +271,100 @@ void MainWindow::redraw(int ms)
 
     // ........................................................................
 
-    auto finished = runners_.finished();
+    std::list<Runner*>& finished = runners_.finished();
     auto finishedI = finished.begin();
 
     while( finishedI != finished.end() )
     {
-        pTWI = ui->tableWidget->item( row, 0 );
-        pTWI->setText( (*startedI)->name() );
-        pTWI->setBackground( Qt::red );
+        col1 = (*finishedI)->name();
 
-        pTWI = ui->tableWidget->item( row, 1 );
-        QTime time = QTime(0, 0, 0).addMSecs( (*startedI)->msPredicted() );
-        pTWI->setText( time.toString("hh:mm:ss") );
-        pTWI->setBackground( Qt::red );
+        time = QTime(0, 0, 0).addMSecs( (*finishedI)->msPredicted() );
+        col2 = time.toString("hh:mm:ss");
 
-        pTWI = ui->tableWidget->item( row, 2 );
-        QString s;
-        int delta = (*startedI)->msPredicted() - ms;
+        int delta = (*finishedI)->msPredicted() - ms;
 
         time = QTime(0, 0, 0).addMSecs( delta );
-        s = time.toString("hh:mm:ss");
+        col3 = time.toString("hh:mm:ss");
 
-        pTWI->setText( s );
-        pTWI->setBackground( Qt::red );
-
-        pTWI = ui->tableWidget->item( row, 3 );
-        pTWI->setBackground( Qt::red );
+        drawRow( row, Qt::red, col1, col2, col3, col4 );
+        (*finishedI)->setId( row );
 
         row++;
-        startedI++;
+        finishedI++;
+    }
+
+    // ........................................................................
+
+    std::list<Runner*>& dns = runners_.dns();
+    auto dnsI = dns.begin();
+
+    while( dnsI != dns.end() )
+    {
+        col1 = (*dnsI)->name();
+
+        time = QTime(0, 0, 0).addMSecs( (*dnsI)->msPredicted() );
+        col2 = time.toString("hh:mm:ss");
+
+        int delta = (*dnsI)->msPredicted() - ms;
+
+        time = QTime(0, 0, 0).addMSecs( delta );
+        col3 = time.toString("hh:mm:ss");
+
+        drawRow( row, Qt::gray, col1, col2, col3, col4 );
+        (*dnsI)->setId( row );
+
+        row++;
+        dnsI++;
+    }
+
+    // ........................................................................
+
+    std::list<Runner*>& dnf = runners_.dns();
+    auto dnfI = dnf.begin();
+
+    while( dnfI != dnf.end() )
+    {
+        col1 = (*dnfI)->name();
+
+        time = QTime(0, 0, 0).addMSecs( (*dnfI)->msPredicted() );
+        col2 = time.toString("hh:mm:ss");
+
+        int delta = (*dnfI)->msPredicted() - ms;
+
+        time = QTime(0, 0, 0).addMSecs( delta );
+        col3 = time.toString("hh:mm:ss");
+
+        drawRow( row, Qt::gray, col1, col2, col3, col4 );
+        (*dnfI)->setId( row );
+
+        row++;
+        dnfI++;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::drawRow( const int row, const QBrush &background, const QString& col1, const QString& col2, const QString& col3, const QString& col4 )
+{
+    if( row < static_cast<int>(runners_.all().size()) )
+    {
+        QTableWidgetItem* pTWI;
+
+        pTWI = ui->tableWidget->item( row, 0 );
+        pTWI->setText( col1 );
+        pTWI->setBackground( background );
+
+        pTWI = ui->tableWidget->item( row, 1 );
+        pTWI->setText( col2 );
+        pTWI->setBackground( background );
+
+        pTWI = ui->tableWidget->item( row, 2 );
+        pTWI->setText( col3 );
+        pTWI->setBackground( background );
+
+        pTWI = ui->tableWidget->item( row, 3 );
+        pTWI->setText( col4 );
+        pTWI->setBackground( background );
     }
 }
 

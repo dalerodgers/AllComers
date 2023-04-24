@@ -12,32 +12,32 @@ public:
     void add( const QString& name, const int msPredicted );
     void sort();
 
-    inline const std::list<Runner> all() const
+    inline std::list<Runner>& all()
     {
         return all_;
     }
 
-    inline const std::list<Runner*> notStarted() const
+    inline std::list<Runner*>& notStarted()
     {
         return notStarted_;
     }
 
-    inline const std::list<Runner*> started() const
+    inline std::list<Runner*>& started()
     {
         return started_;
     }
 
-    inline const std::list<Runner*> finished() const
+    inline std::list<Runner*>& finished()
     {
         return finished_;
     }
 
-    inline const std::list<Runner*> dns() const
+    inline std::list<Runner*>& dns()
     {
         return dns_;
     }
 
-    inline const std::list<Runner*> dnf() const
+    inline std::list<Runner*>& dnf()
     {
         return dnf_;
     }

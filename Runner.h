@@ -24,15 +24,17 @@ public:
     State_e state() const;
     const QString& name() const;
     int msPredicted() const;
-    int msElapsed() const;
+
+    int id() const;
+    void setId( const int id );
 
 private:
     const QString name_;
     const int msPredicted_;
-    QElapsedTimer elapsed_;
     int msFinished_;
 
     State_e state_;
+    int id_;
 };
 
 #endif // RUNNER_H
