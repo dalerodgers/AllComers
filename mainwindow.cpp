@@ -85,6 +85,7 @@ void MainWindow::onOpen(bool checked)
         // ....................................................................
 
         ui->tableWidget->setRowCount( runners_.all().size() );
+
         row = 0;
 
         auto all = runners_.all();
@@ -94,12 +95,21 @@ void MainWindow::onOpen(bool checked)
         {
             for( int col = 0; col < NUM_COLUMNS; col++ )
             {
-                ui->tableWidget->setItem( row, col, new QTableWidgetItem );
+                QTableWidgetItem* pTWI = new QTableWidgetItem;
+                QFont font = pTWI->font();
+                font.setPointSize( 24 );
+                pTWI->setFont( font );
 
                 if( col > 0 )
                 {
-                    ui->tableWidget->item( row, col )->setTextAlignment(Qt::AlignRight);
+                    pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignRight);
                 }
+                else
+                {
+                    pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+                }
+
+                ui->tableWidget->setItem( row, col, pTWI );
             }
 
             row++;
@@ -107,6 +117,7 @@ void MainWindow::onOpen(bool checked)
         }
 
         ui->tableWidget->verticalHeader()->hide();
+        ui->tableWidget->resizeRowsToContents();
 
         redraw();
 
@@ -143,7 +154,7 @@ void MainWindow::onStartStopPressed()
     }
     else if( !isStarted_ )
     {
-        msSlowest_ = msFUDGE + runners_.notStarted().front()->msPredicted();
+        msSlowest_ = runners_.notStarted().front()->msPredicted();
 
         isStarted_ = true;
         ui->startStopButton->setText( "Stop" );
@@ -193,7 +204,7 @@ void MainWindow::onTimer()
         t = -t;
     }
 
-    s += QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
+    s += QTime( QTime(0 ,0, 0).addMSecs(t + msFUDGE) ).toString("hh:mm:ss");
     ui->downText->setText( s );
 
     t = elapsedTimer_.elapsed() - msFUDGE;
@@ -263,16 +274,16 @@ void MainWindow::redraw( int ms )
 
         if( isStarted_ )
         {
-            int delta = (*notStartedI)->msPredicted() - ms;
+            int delta = (*notStartedI)->msPredicted() - msSlowest_ + ms;
 
-            if( delta <= (*notStartedI)->msPredicted() )
+            if( delta >= 0 )
             {
                 (*notStartedI)->Start();
                 textToSpeech_.say( (*notStartedI)->name() );
             }
             else
             {
-                //delta = -delta;
+                delta = -delta;
                 col3 = "-";
             }
 
