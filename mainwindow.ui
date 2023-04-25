@@ -43,7 +43,10 @@
          </spacer>
         </item>
         <item>
-         <widget class="QLineEdit" name="stopwatchText"/>
+         <widget class="QLineEdit" name="upText"/>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="downText"/>
         </item>
        </layout>
       </item>

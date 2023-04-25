@@ -52,6 +52,7 @@ private:
 
     static bool cmp_notStarted(const Runner* a, const Runner* b);
     static bool cmp_names(const Runner* a, const Runner* b);
+    static bool cmp_deltas(const Runner* a, const Runner* b);
 };
 
 #endif // RUNNERS_H

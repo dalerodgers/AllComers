@@ -34,6 +34,20 @@ int Runner::msPredicted() const
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int Runner::msFinished() const
+{
+    return msFinished_;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+int Runner::msDelta() const
+{
+    return msFinished_ - msPredicted_;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void Runner::Start()
 {
     if( ( state_ == State_e::WAITIING_TO_START ) || \
@@ -54,11 +68,19 @@ void Runner::Stop( int msElapsed )
             break;
 
         case State_e::RUNNING:
-            ( msElapsed > 0 ? state_ = State_e::FINISHED : state_ = State_e::DNF );
+            if( msElapsed >= 0 )
+            {
+                state_ = State_e::FINISHED;
+                msFinished_ = msElapsed;
+            }
+            else
+            {
+                state_ = State_e::DNF;
+            }
             break;
 
         case State_e::FINISHED:
-            ( msElapsed > 0 ? state_ = State_e::RUNNING : state_ = State_e::FINISHED );
+            ( msElapsed >= 0 ? state_ = State_e::RUNNING : state_ = State_e::FINISHED );
             break;
 
         case State_e::DNS:

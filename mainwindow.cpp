@@ -185,14 +185,26 @@ void MainWindow::onTimer()
     }
 
     int t = msSlowest_ - elapsedTimer_.elapsed();
-    QString s = QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
+    QString s;
 
     if( msSlowest_ < 0 )
     {
-        s = "-" + s;
+        s = "-";
+        t = -t;
     }
 
-    ui->stopwatchText->setText( s );
+    s += QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
+    ui->downText->setText( s );
+
+    t = elapsedTimer_.elapsed() - msFUDGE;
+    s.clear();
+
+    if( t >= 0 )
+    {
+        s = QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
+    }
+
+    ui->upText->setText( s );
 
     redraw( t );
 }
@@ -214,7 +226,7 @@ void MainWindow::onCellPressed(int row, int column)
 
             if( isStarted_ )
             {
-                iter->Stop( elapsedTimer_.elapsed() );
+                iter->Stop( elapsedTimer_.elapsed() - msFUDGE );
             }
 
             iter = all.end();
@@ -230,7 +242,7 @@ void MainWindow::onCellPressed(int row, int column)
 
 ////////////////////////// /////////////////////////////////////////////////////
 
-void MainWindow::redraw(int ms)
+void MainWindow::redraw( int ms )
 {
     int row = 0;
     runners_.sort();
@@ -253,14 +265,14 @@ void MainWindow::redraw(int ms)
         {
             int delta = (*notStartedI)->msPredicted() - ms;
 
-            if( delta >= 0 )
+            if( delta <= (*notStartedI)->msPredicted() )
             {
                 (*notStartedI)->Start();
                 textToSpeech_.say( (*notStartedI)->name() );
             }
             else
             {
-                delta = -delta;
+                //delta = -delta;
                 col3 = "-";
             }
 
@@ -268,7 +280,7 @@ void MainWindow::redraw(int ms)
             col3 += time.toString("hh:mm:ss");
         }
 
-        drawRow( row, Qt::yellow, col1, col2, col3, col4 );
+        drawRow( row, Qt::yellow, col1, col2, col3 );
         (*notStartedI)->setId( row );
 
         row++;
@@ -291,7 +303,7 @@ void MainWindow::redraw(int ms)
         time = QTime(0, 0, 0).addMSecs( delta );
         col3 = time.toString("hh:mm:ss");
 
-        drawRow( row, Qt::green, col1, col2, col3, col4 );
+        drawRow( row, Qt::green, col1, col2, col3 );
         (*startedI)->setId( row );
 
         row++;
@@ -310,10 +322,23 @@ void MainWindow::redraw(int ms)
         time = QTime(0, 0, 0).addMSecs( (*finishedI)->msPredicted() );
         col2 = time.toString("hh:mm:ss");
 
-        int delta = (*finishedI)->msPredicted() - ms;
+        time = QTime(0, 0, 0).addMSecs( (*finishedI)->msFinished() );
+        col3 = time.toString("hh:mm:ss");
+
+        int delta = (*finishedI)->msDelta();
+
+        if( delta >= 0 )
+        {
+            col4.clear();
+        }
+        else
+        {
+            delta = -delta;
+            col4 = "-";
+        }
 
         time = QTime(0, 0, 0).addMSecs( delta );
-        col3 = time.toString("hh:mm:ss");
+        col4 += time.toString("hh:mm:ss");
 
         drawRow( row, Qt::red, col1, col2, col3, col4 );
         (*finishedI)->setId( row );
@@ -336,7 +361,7 @@ void MainWindow::redraw(int ms)
 
         col3 = "DNS";
 
-        drawRow( row, Qt::gray, col1, col2, col3, col4 );
+        drawRow( row, Qt::gray, col1, col2, col3 );
         (*dnsI)->setId( row );
 
         row++;
@@ -357,7 +382,7 @@ void MainWindow::redraw(int ms)
 
         col3 = "DNF";
 
-        drawRow( row, Qt::lightGray, col1, col2, col3, col4 );
+        drawRow( row, Qt::lightGray, col1, col2, col3 );
         (*dnfI)->setId( row );
 
         row++;

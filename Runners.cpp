@@ -57,6 +57,9 @@ void Runners::sort()
 
     notStarted_.sort( &cmp_notStarted );
     started_.sort( &cmp_names );
+    finished_.sort( &cmp_deltas );
+    dns_.sort( &cmp_names );
+    dnf_.sort( &cmp_names );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,6 +74,16 @@ bool Runners::cmp_notStarted(const Runner* a, const Runner* b)
 bool Runners::cmp_names(const Runner* a, const Runner* b)
 {
     return static_cast<bool>( a->name() < b->name() );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+bool Runners::cmp_deltas(const Runner* a, const Runner* b)
+{
+    const int delta_a = abs( a->msDelta() );
+    const int delta_b = abs( b->msDelta() );
+
+    return static_cast<bool>( delta_a < delta_b );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -24,6 +24,8 @@ public:
     State_e state() const;
     const QString& name() const;
     int msPredicted() const;
+    int msFinished() const;
+    int msDelta() const;
 
     int id() const;
     void setId( const int id );
