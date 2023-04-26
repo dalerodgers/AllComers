@@ -16,17 +16,20 @@ include(./QXlsx.pri)
 
 SOURCES += \
     Runner.cpp \
+    RunnerDialog.cpp \
     Runners.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     Runner.h \
+    RunnerDialog.h \
     RunnerWidget.h \
     Runners.h \
     mainwindow.h
 
 FORMS += \
+    RunnerDialog.ui \
     mainwindow.ui
 
 # Default rules for deployment.

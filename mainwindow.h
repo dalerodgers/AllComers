@@ -40,6 +40,7 @@ private slots:
     void onOpen(bool checked);
     void onSave(bool checked);
     void onExit(bool checked);
+    void onAdd(bool checked);
 
     void onStartStopPressed();
 

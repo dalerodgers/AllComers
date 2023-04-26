@@ -75,7 +75,14 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuRunner">
+    <property name="title">
+     <string>Runner</string>
+    </property>
+    <addaction name="actionAdd"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuRunner"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
@@ -101,6 +108,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionAdd">
+   <property name="text">
+    <string>Add</string>
    </property>
   </action>
  </widget>

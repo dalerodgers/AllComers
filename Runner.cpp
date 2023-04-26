@@ -8,6 +8,7 @@ Runner::Runner( const QString& name, const int msPredicted ) :
 {
     state_ = State_e::WAITIING_TO_START;
     msFinished_ = 0;
+    msStart_ = 0;
     id_ = -1;
 }
 
@@ -34,6 +35,13 @@ int Runner::msPredicted() const
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int Runner::msStart() const
+{
+    return msStart_;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 int Runner::msFinished() const
 {
     return msFinished_;
@@ -43,23 +51,24 @@ int Runner::msFinished() const
 
 int Runner::msDelta() const
 {
-    return msFinished_ - msPredicted_;
+    return msFinished_ - msStart_ - msPredicted_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Runner::Start()
+void Runner::Start( const int msStart )
 {
     if( ( state_ == State_e::WAITIING_TO_START ) || \
         ( state_ == State_e::FINISHED ) )
     {
+        msStart_ = msStart;
         state_ = State_e::RUNNING;
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Runner::Stop( int msElapsed )
+void Runner::Stop( const int msElapsed )
 {
     switch( state_ )
     {

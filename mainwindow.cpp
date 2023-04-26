@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QTime>
 
+#include "RunnerDialog.h"
 #include "xlsxdocument.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -21,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect( ui->actionExit, SIGNAL(triggered(bool)), this, SLOT(onExit(bool)) );
 
+    connect( ui->actionAdd, SIGNAL(triggered(bool)), this, SLOT(onAdd(bool)) );
+    ui->actionAdd->setEnabled( false );
+
     connect( ui->startStopButton, SIGNAL(pressed()), this, SLOT(onStartStopPressed()) );
     ui->startStopButton->setEnabled( false );
 
@@ -33,6 +37,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setColumnCount( NUM_COLUMNS );
     QStringList headers = {"Name", "Predicted", "Time", "Delta" };
     ui->tableWidget->setHorizontalHeaderLabels( headers );
+    ui->tableWidget->horizontalHeader()->resizeSection(0, 300);
+    ui->tableWidget->horizontalHeader()->resizeSection(1, 200);
+    ui->tableWidget->horizontalHeader()->resizeSection(2, 200);
+    ui->tableWidget->horizontalHeader()->resizeSection(3, 200);
 
     isStarted_ = false;
 }
@@ -51,9 +59,9 @@ void MainWindow::onOpen(bool checked)
     Q_UNUSED(checked);
 
     const QString fileName = QFileDialog::getOpenFileName( this,
-                                                     tr("Open File"),
-                                                     "",
-                                                     tr("XLSX (*.xlsx)") );
+                                                           tr("Open File"),
+                                                           "",
+                                                           tr("XLSX (*.xlsx)") );
 
     QXlsx::Document xlsxR( fileName );
 
@@ -98,6 +106,7 @@ void MainWindow::onOpen(bool checked)
                 QTableWidgetItem* pTWI = new QTableWidgetItem;
                 QFont font = pTWI->font();
                 font.setPointSize( 24 );
+                font.setFamily( "Courier" );
                 pTWI->setFont( font );
 
                 if( col > 0 )
@@ -121,6 +130,7 @@ void MainWindow::onOpen(bool checked)
 
         redraw();
 
+        ui->actionAdd->setEnabled( true );
         ui->startStopButton->setEnabled( true );
     }
 }
@@ -130,7 +140,31 @@ void MainWindow::onOpen(bool checked)
 void MainWindow::onSave(bool checked)
 {
     Q_UNUSED(checked);
-    qDebug() << "onSave";
+
+    const QString fileName = QFileDialog::getSaveFileName( this,
+                                                           tr("Open File"),
+                                                           "",
+                                                           tr("XLSX (*.xlsx)") );
+
+    if( fileName.size() > 0 )
+    {
+        QXlsx::Document xlsxW( fileName );
+
+        xlsxW.write(1, 1, ui->tableWidget->horizontalHeaderItem(0)->text() );
+        xlsxW.write(1, 2, ui->tableWidget->horizontalHeaderItem(1)->text() );
+        xlsxW.write(1, 3, ui->tableWidget->horizontalHeaderItem(2)->text() );
+        xlsxW.write(1, 4, ui->tableWidget->horizontalHeaderItem(3)->text() );
+
+        for( int row = 0; row < ui->tableWidget->rowCount(); row++ )
+        {
+            for( int col = 0; col < ui->tableWidget->columnCount(); col++ )
+            {
+                xlsxW.write( row+2, col+1, QVariant( ui->tableWidget->item(row, col)->text() ) );
+            }
+        }
+
+        xlsxW.save();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,6 +174,20 @@ void MainWindow::onExit(bool checked)
     Q_UNUSED(checked);
 
     close();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::onAdd(bool checked)
+{
+    Q_UNUSED(checked);
+    qDebug() << "onAdd";
+
+    RunnerDialog rd;
+
+
+
+    rd.exec();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -162,6 +210,7 @@ void MainWindow::onStartStopPressed()
         ui->actionOpen->setEnabled( false );
         ui->actionSave->setEnabled( false );
         ui->actionExit->setEnabled( false );
+        ui->actionAdd->setEnabled( false );
 
         elapsedTimer_.start();
         timer_.start(50);
@@ -190,11 +239,6 @@ void MainWindow::onStartStopPressed()
 
 void MainWindow::onTimer()
 {
-    if( !isStarted_ )
-    {
-        timer_.stop();
-    }
-
     int t = msSlowest_ - elapsedTimer_.elapsed();
     QString s;
 
@@ -218,6 +262,22 @@ void MainWindow::onTimer()
     ui->upText->setText( s );
 
     redraw( t );
+
+    const unsigned int sortOfFinished = runners_.finished().size() + \
+                                        runners_.dns().size() + \
+                                        runners_.dnf().size();
+    if( !isStarted_ )
+    {
+        timer_.stop();
+    }
+    else if( sortOfFinished >= runners_.all().size() )
+    {
+        onStartStopPressed();
+    }
+    else
+    {
+        ;   // do nothing
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -278,7 +338,7 @@ void MainWindow::redraw( int ms )
 
             if( delta >= 0 )
             {
-                (*notStartedI)->Start();
+                (*notStartedI)->Start( ms );
                 textToSpeech_.say( (*notStartedI)->name() );
             }
             else
@@ -310,7 +370,7 @@ void MainWindow::redraw( int ms )
         time = QTime(0, 0, 0).addMSecs( (*startedI)->msPredicted() );
         col2 = time.toString("hh:mm:ss");
 
-        int delta = (*startedI)->msPredicted() - ms;
+        int delta = ms - (*startedI)->msStart();
         time = QTime(0, 0, 0).addMSecs( delta );
         col3 = time.toString("hh:mm:ss");
 
@@ -333,7 +393,7 @@ void MainWindow::redraw( int ms )
         time = QTime(0, 0, 0).addMSecs( (*finishedI)->msPredicted() );
         col2 = time.toString("hh:mm:ss");
 
-        time = QTime(0, 0, 0).addMSecs( (*finishedI)->msFinished() );
+        time = QTime(0, 0, 0).addMSecs( (*finishedI)->msFinished() - (*finishedI)->msStart() );
         col3 = time.toString("hh:mm:ss");
 
         int delta = (*finishedI)->msDelta();
