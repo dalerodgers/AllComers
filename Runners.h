@@ -3,6 +3,7 @@
 
 #include "Runner.h"
 #include <list>
+#include <QTextToSpeech>
 
 class Runners
 {
@@ -43,6 +44,7 @@ public:
     }
 
 private:
+    QTextToSpeech textToSpeech_;
     std::list<Runner> all_;
     std::list<Runner*> notStarted_;
     std::list<Runner*> started_;

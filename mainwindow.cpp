@@ -92,38 +92,7 @@ void MainWindow::onOpen(bool checked)
 
         // ....................................................................
 
-        ui->tableWidget->setRowCount( runners_.all().size() );
-
-        row = 0;
-
-        auto all = runners_.all();
-        auto iter = all.begin();
-
-        while( iter != all.end() )
-        {
-            for( int col = 0; col < NUM_COLUMNS; col++ )
-            {
-                QTableWidgetItem* pTWI = new QTableWidgetItem;
-                QFont font = pTWI->font();
-                font.setPointSize( 24 );
-                font.setFamily( "Courier" );
-                pTWI->setFont( font );
-
-                if( col > 0 )
-                {
-                    pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignRight);
-                }
-                else
-                {
-                    pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-                }
-
-                ui->tableWidget->setItem( row, col, pTWI );
-            }
-
-            row++;
-            iter++;
-        }
+        addRows();
 
         ui->tableWidget->verticalHeader()->hide();
         ui->tableWidget->resizeRowsToContents();
@@ -183,11 +152,11 @@ void MainWindow::onAdd(bool checked)
     Q_UNUSED(checked);
     qDebug() << "onAdd";
 
-    RunnerDialog rd;
-
-
-
+    RunnerDialog rd( &runners_, nullptr, this );
     rd.exec();
+
+    addRows();
+    redraw();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -299,6 +268,14 @@ void MainWindow::onCellPressed(int row, int column)
             {
                 iter->Stop( elapsedTimer_.elapsed() - msFUDGE );
             }
+            else
+            {
+                RunnerDialog rd( nullptr, &(*iter), this );
+                rd.exec();
+
+                addRows();
+                redraw();
+            }
 
             iter = all.end();
         }
@@ -322,6 +299,13 @@ void MainWindow::redraw( int ms )
 
     // ........................................................................
 
+    while( ui->tableWidget->rowCount() != (int)runners_.all().size() )
+    {
+        ui->tableWidget->insertRow( ui->tableWidget->rowCount() - 1 );
+    }
+
+    // ........................................................................
+
     std::list<Runner*>& notStarted = runners_.notStarted();
     auto notStartedI = notStarted.begin();
 
@@ -334,12 +318,13 @@ void MainWindow::redraw( int ms )
 
         if( isStarted_ )
         {
-            int delta = (*notStartedI)->msPredicted() - msSlowest_ + ms;
+            //int delta = (*notStartedI)->msPredicted() - msSlowest_ + ms;
+            int delta = ms - ( msSlowest_ - (*notStartedI)->msPredicted() );
+            (*notStartedI)->newTime( delta );
 
             if( delta >= 0 )
             {
                 (*notStartedI)->Start( ms );
-                textToSpeech_.say( (*notStartedI)->name() );
             }
             else
             {
@@ -347,7 +332,7 @@ void MainWindow::redraw( int ms )
                 col3 = "-";
             }
 
-            time = QTime(0, 0, 0).addMSecs( delta );
+            time = QTime(0, 0, 0).addMSecs( delta + 1000 );
             col3 += time.toString("hh:mm:ss");
         }
 
@@ -407,6 +392,8 @@ void MainWindow::redraw( int ms )
             delta = -delta;
             col4 = "-";
         }
+
+        delta += 1000;
 
         time = QTime(0, 0, 0).addMSecs( delta );
         col4 += time.toString("hh:mm:ss");
@@ -484,6 +471,36 @@ void MainWindow::drawRow( const int row, const QBrush &background, const QString
         pTWI = ui->tableWidget->item( row, 3 );
         pTWI->setText( col4 );
         pTWI->setBackground( background );
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::addRows()
+{
+    while( ui->tableWidget->rowCount() != static_cast<int>( runners_.all().size() ) )
+    {
+        ui->tableWidget->setRowCount( ui->tableWidget->rowCount() + 1 );
+
+        for( int col = 0; col < NUM_COLUMNS; col++ )
+        {
+            QTableWidgetItem* pTWI = new QTableWidgetItem;
+            QFont font = pTWI->font();
+            font.setPointSize( 24 );
+            font.setFamily( "Courier" );
+            pTWI->setFont( font );
+
+            if( col > 0 )
+            {
+                pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignRight);
+            }
+            else
+            {
+                pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+            }
+
+            ui->tableWidget->setItem( ui->tableWidget->rowCount() - 1, col, pTWI );
+        }
     }
 }
 

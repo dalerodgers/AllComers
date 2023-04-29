@@ -4,9 +4,9 @@
 #include <QMainWindow>
 
 #include "Runners.h"
+#include <QElapsedTimer>
 #include <QTableWidgetItem>
 #include <QTimer>
-#include <QTextToSpeech>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -31,10 +31,10 @@ private:
     QTimer timer_;
     QElapsedTimer elapsedTimer_;
     int msSlowest_;
-    QTextToSpeech textToSpeech_;
 
     void redraw(int ms = 0);
     void drawRow( const int row, const QBrush &background, const QString& col1, const QString& col2, const QString& col3="", const QString& col4="" );
+    void addRows();
 
 private slots:
     void onOpen(bool checked);

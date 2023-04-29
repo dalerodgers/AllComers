@@ -4,13 +4,14 @@
 
 Runners::Runners()
 {
+    textToSpeech_.setRate( 0.0 );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 void Runners::add( const QString& name, const int msPredicted )
 {
-    all_.push_back( Runner(name, msPredicted) );
+    all_.push_back( Runner(name, msPredicted, textToSpeech_ ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

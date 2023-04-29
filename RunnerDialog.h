@@ -7,16 +7,28 @@ namespace Ui {
 class RunnerDialog;
 }
 
+class Runner;
+class Runners;
+
 class RunnerDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit RunnerDialog(QWidget *parent = nullptr);
+    RunnerDialog(Runners* runners, Runner* runner, QWidget *parent = nullptr);
     ~RunnerDialog();
 
 private:
     Ui::RunnerDialog *ui;
+    Runners* runners_;
+    Runner* runner_;
+
+    void setRanges();
+
+private slots:
+    void onCancel();
+    void onOk();
+    void onMarkAsDNS();
 };
 
 #endif // RUNNERDIALOG_H
