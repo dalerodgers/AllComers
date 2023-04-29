@@ -42,6 +42,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->horizontalHeader()->resizeSection(2, 200);
     ui->tableWidget->horizontalHeader()->resizeSection(3, 200);
 
+    ui->downText->setReadOnly( true );
+    ui->upText->setReadOnly( true );
+
     isStarted_ = false;
 }
 
@@ -318,7 +321,6 @@ void MainWindow::redraw( int ms )
 
         if( isStarted_ )
         {
-            //int delta = (*notStartedI)->msPredicted() - msSlowest_ + ms;
             int delta = ms - ( msSlowest_ - (*notStartedI)->msPredicted() );
             (*notStartedI)->newTime( delta );
 
@@ -332,7 +334,7 @@ void MainWindow::redraw( int ms )
                 col3 = "-";
             }
 
-            time = QTime(0, 0, 0).addMSecs( delta + 1000 );
+            time = QTime(0, 0, 0).addMSecs( delta + 500 );
             col3 += time.toString("hh:mm:ss");
         }
 
@@ -393,7 +395,7 @@ void MainWindow::redraw( int ms )
             col4 = "-";
         }
 
-        delta += 1000;
+        delta += 500;
 
         time = QTime(0, 0, 0).addMSecs( delta );
         col4 += time.toString("hh:mm:ss");
@@ -498,6 +500,8 @@ void MainWindow::addRows()
             {
                 pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignLeft );
             }
+
+            pTWI->setFlags( Qt::ItemIsEnabled );
 
             ui->tableWidget->setItem( ui->tableWidget->rowCount() - 1, col, pTWI );
         }

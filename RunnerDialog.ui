@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>480</width>
+    <width>319</width>
     <height>143</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Runner</string>
@@ -18,7 +24,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>461</width>
+     <width>301</width>
      <height>41</height>
     </rect>
    </property>
@@ -40,7 +46,7 @@
     <rect>
      <x>10</x>
      <y>60</y>
-     <width>461</width>
+     <width>301</width>
      <height>31</height>
     </rect>
    </property>
@@ -61,7 +67,7 @@
     <rect>
      <x>10</x>
      <y>110</y>
-     <width>461</width>
+     <width>301</width>
      <height>31</height>
     </rect>
    </property>
