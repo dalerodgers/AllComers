@@ -10,6 +10,7 @@ class Runners
 public:
     Runners();
 
+    void clear();
     void add( const QString& name, const int msPredicted );
     void sort();
 

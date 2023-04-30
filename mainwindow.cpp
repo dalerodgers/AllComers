@@ -7,6 +7,10 @@
 #include "RunnerDialog.h"
 #include "xlsxdocument.h"
 
+#ifdef Q_OS_ANDROID
+    #include <QJniObject>
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 
 MainWindow::MainWindow(QWidget *parent)
@@ -15,15 +19,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect( ui->actionOpen, SIGNAL(triggered(bool)), this, SLOT(onOpen(bool)) );
+    connect( ui->button_Open, SIGNAL(pressed()), this, SLOT(onOpen()) );
 
-    connect( ui->actionSave, SIGNAL(triggered(bool)), this, SLOT(onSave(bool)) );
-    ui->actionSave->setEnabled( false );
+    connect( ui->button_Save, SIGNAL(pressed()), this, SLOT(onSave()) );
+    ui->button_Save->setEnabled( false );
 
-    connect( ui->actionExit, SIGNAL(triggered(bool)), this, SLOT(onExit(bool)) );
-
-    connect( ui->actionAdd, SIGNAL(triggered(bool)), this, SLOT(onAdd(bool)) );
-    ui->actionAdd->setEnabled( false );
+    connect( ui->button_Add, SIGNAL(pressed()), this, SLOT(onAdd()) );
 
     connect( ui->startStopButton, SIGNAL(pressed()), this, SLOT(onStartStopPressed()) );
     ui->startStopButton->setEnabled( false );
@@ -37,13 +38,29 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setColumnCount( NUM_COLUMNS );
     QStringList headers = {"Name", "Predicted", "Time", "Delta" };
     ui->tableWidget->setHorizontalHeaderLabels( headers );
-    ui->tableWidget->horizontalHeader()->resizeSection(0, 300);
-    ui->tableWidget->horizontalHeader()->resizeSection(1, 200);
-    ui->tableWidget->horizontalHeader()->resizeSection(2, 200);
-    ui->tableWidget->horizontalHeader()->resizeSection(3, 200);
+    ui->tableWidget->verticalHeader()->hide();
+
+    width_ = -1;
 
     ui->downText->setReadOnly( true );
     ui->upText->setReadOnly( true );
+#ifdef Q_OS_ANDROID
+    QFont font = ui->downText->font();
+    font.setPointSize(12);
+    font.setBold( true );
+    ui->downText->setFont( font );
+    ui->upText->setFont( font );
+
+    QJniObject window = QJniObject::callStaticObjectMethod( "android/view/Window",
+                                                            "getWindow",
+                                                            "()Landroid/view/Window;");
+
+    if (window.isValid() )
+    {
+        const int FLAG_KEEP_SCREEN_ON = 128;
+        window.callObjectMethod("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+    }
+#endif
 
     isStarted_ = false;
 }
@@ -57,10 +74,8 @@ MainWindow::~MainWindow()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void MainWindow::onOpen(bool checked)
+void MainWindow::onOpen()
 {
-    Q_UNUSED(checked);
-
     const QString fileName = QFileDialog::getOpenFileName( this,
                                                            tr("Open File"),
                                                            "",
@@ -72,6 +87,8 @@ void MainWindow::onOpen(bool checked)
 
     if (xlsxR.load()) // load excel file
     {
+        runners_.clear();
+
         QXlsx::Cell* cell1;
         QXlsx::Cell* cell2;
 
@@ -96,23 +113,17 @@ void MainWindow::onOpen(bool checked)
         // ....................................................................
 
         addRows();
-
-        ui->tableWidget->verticalHeader()->hide();
-        ui->tableWidget->resizeRowsToContents();
-
         redraw();
 
-        ui->actionAdd->setEnabled( true );
+        ui->button_Add->setEnabled( true );
         ui->startStopButton->setEnabled( true );
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void MainWindow::onSave(bool checked)
+void MainWindow::onSave()
 {
-    Q_UNUSED(checked);
-
     const QString fileName = QFileDialog::getSaveFileName( this,
                                                            tr("Open File"),
                                                            "",
@@ -150,9 +161,8 @@ void MainWindow::onExit(bool checked)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void MainWindow::onAdd(bool checked)
+void MainWindow::onAdd()
 {
-    Q_UNUSED(checked);
     qDebug() << "onAdd";
 
     RunnerDialog rd( &runners_, nullptr, this );
@@ -179,10 +189,9 @@ void MainWindow::onStartStopPressed()
         isStarted_ = true;
         ui->startStopButton->setText( "Stop" );
 
-        ui->actionOpen->setEnabled( false );
-        ui->actionSave->setEnabled( false );
-        ui->actionExit->setEnabled( false );
-        ui->actionAdd->setEnabled( false );
+        ui->button_Open->setEnabled( false );
+        ui->button_Save->setEnabled( false );
+        ui->button_Add->setEnabled( false );
 
         elapsedTimer_.start();
         timer_.start(50);
@@ -201,9 +210,8 @@ void MainWindow::onStartStopPressed()
             iter++;
         }
 
-        ui->actionOpen->setEnabled( true );
-        ui->actionSave->setEnabled( true );
-        ui->actionExit->setEnabled( true );
+        ui->button_Open->setEnabled( true );
+        ui->button_Save->setEnabled( true );
     }
 }
 
@@ -256,35 +264,36 @@ void MainWindow::onTimer()
 
 void MainWindow::onCellPressed(int row, int column)
 {
-    Q_UNUSED( column );
-
-    std::list<Runner>& all = runners_.all();
-    auto iter = all.begin();
-
-    while( iter != all.end() )
+    if( column == 0 )
     {
-        if( row == iter->id() )
-        {
-            qDebug() << iter->name();
+        std::list<Runner>& all = runners_.all();
+        auto iter = all.begin();
 
-            if( isStarted_ )
+        while( iter != all.end() )
+        {
+            if( row == iter->id() )
             {
-                iter->Stop( elapsedTimer_.elapsed() - msFUDGE );
+                qDebug() << iter->name();
+
+                if( isStarted_ )
+                {
+                    iter->Stop( elapsedTimer_.elapsed() - msFUDGE );
+                }
+                else
+                {
+                    RunnerDialog rd( nullptr, &(*iter), this );
+                    rd.exec();
+
+                    addRows();
+                    redraw();
+                }
+
+                iter = all.end();
             }
             else
             {
-                RunnerDialog rd( nullptr, &(*iter), this );
-                rd.exec();
-
-                addRows();
-                redraw();
+                iter++;
             }
-
-            iter = all.end();
-        }
-        else
-        {
-            iter++;
         }
     }
 
@@ -299,6 +308,25 @@ void MainWindow::redraw( int ms )
     runners_.sort();
     QString col1, col2, col3, col4;
     QTime time;
+
+    // ........................................................................
+
+    const int newWidth = ui->tableWidget->width();
+
+    if( width_ != newWidth )
+    {
+        width_ = ui->tableWidget->width();
+        ui->tableWidget->horizontalHeader()->resizeSection(0, width_ / NUM_COLUMNS );
+        ui->tableWidget->horizontalHeader()->resizeSection(1, width_ / NUM_COLUMNS );
+        ui->tableWidget->horizontalHeader()->resizeSection(2, width_ / NUM_COLUMNS );
+        ui->tableWidget->horizontalHeader()->resizeSection(3, width_ / NUM_COLUMNS );
+    }
+    // ........................................................................
+
+    if( !runners_.all().empty() )
+    {
+        ui->startStopButton->setEnabled( true );
+    }
 
     // ........................................................................
 
@@ -488,7 +516,12 @@ void MainWindow::addRows()
         {
             QTableWidgetItem* pTWI = new QTableWidgetItem;
             QFont font = pTWI->font();
+
+ #ifndef Q_OS_ANDROID
             font.setPointSize( 24 );
+ #else
+            font.setPointSize( 18 );
+ #endif
             font.setFamily( "Courier" );
             pTWI->setFont( font );
 
@@ -504,6 +537,7 @@ void MainWindow::addRows()
             pTWI->setFlags( Qt::ItemIsEnabled );
 
             ui->tableWidget->setItem( ui->tableWidget->rowCount() - 1, col, pTWI );
+            ui->tableWidget->verticalHeader()->resizeSection( ui->tableWidget->rowCount() - 1, font.pixelSize() + 40 );
         }
     }
 }

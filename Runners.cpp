@@ -16,13 +16,20 @@ void Runners::add( const QString& name, const int msPredicted )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Runners::sort()
+void Runners::clear()
 {
     notStarted_.clear();
     started_.clear();
     finished_.clear();
     dns_.clear();
     dnf_.clear();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Runners::sort()
+{
+    clear();
 
     auto iter = all_.begin();
     while( iter != all_.end() )
