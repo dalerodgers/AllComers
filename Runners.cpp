@@ -18,6 +18,7 @@ void Runners::add( const QString& name, const int msPredicted )
 
 void Runners::clear()
 {
+    //all_.clear();
     notStarted_.clear();
     started_.clear();
     finished_.clear();

@@ -3,6 +3,8 @@
 
 #include <QFileDialog>
 #include <QTime>
+#include <QScroller>
+#include <QScrollBar>
 
 #include "RunnerDialog.h"
 #include "xlsxdocument.h"
@@ -40,6 +42,25 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setHorizontalHeaderLabels( headers );
     ui->tableWidget->verticalHeader()->hide();
 
+    // ........................................................................
+
+    ui->tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->tableWidget->horizontalScrollBar()->setDisabled(true);
+    //ui->tableWidget->horizontalHeader()->setHidden(true);
+    ui->tableWidget->verticalHeader()->setHidden(true);
+    //ui->tableWidget->setShowGrid(false);
+    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setAutoScroll(true);
+    ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    // add a kinetic scroller
+    QScroller::grabGesture(ui->tableWidget, QScroller::LeftMouseButtonGesture);
+
+    // ........................................................................///
+
     width_ = -1;
 
     ui->downText->setReadOnly( true );
@@ -51,14 +72,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->downText->setFont( font );
     ui->upText->setFont( font );
 
-    QJniObject window = QJniObject::callStaticObjectMethod( "android/view/Window",
-                                                            "getWindow",
-                                                            "()Landroid/view/Window;");
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
 
-    if (window.isValid() )
+    if (activity.isValid())
     {
-        const int FLAG_KEEP_SCREEN_ON = 128;
-        window.callObjectMethod("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+
+        if( window.isValid() )
+        {
+            const int FLAG_KEEP_SCREEN_ON = 128;
+            //window.callObjectMethod("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+            window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        }
     }
 #endif
 
@@ -88,6 +113,7 @@ void MainWindow::onOpen()
     if (xlsxR.load()) // load excel file
     {
         runners_.clear();
+        ui->tableWidget->clearContents();
 
         QXlsx::Cell* cell1;
         QXlsx::Cell* cell2;
@@ -315,12 +341,15 @@ void MainWindow::redraw( int ms )
 
     if( width_ != newWidth )
     {
-        width_ = ui->tableWidget->width();
-        ui->tableWidget->horizontalHeader()->resizeSection(0, width_ / NUM_COLUMNS );
-        ui->tableWidget->horizontalHeader()->resizeSection(1, width_ / NUM_COLUMNS );
-        ui->tableWidget->horizontalHeader()->resizeSection(2, width_ / NUM_COLUMNS );
-        ui->tableWidget->horizontalHeader()->resizeSection(3, width_ / NUM_COLUMNS );
+        width_ = newWidth;
+        const int colWidth = width_ / NUM_COLUMNS;
+
+        ui->tableWidget->horizontalHeader()->resizeSection(0, colWidth );
+        ui->tableWidget->horizontalHeader()->resizeSection(1, colWidth );
+        ui->tableWidget->horizontalHeader()->resizeSection(2, colWidth );
+        ui->tableWidget->horizontalHeader()->resizeSection(3, colWidth );
     }
+
     // ........................................................................
 
     if( !runners_.all().empty() )
@@ -537,7 +566,9 @@ void MainWindow::addRows()
             pTWI->setFlags( Qt::ItemIsEnabled );
 
             ui->tableWidget->setItem( ui->tableWidget->rowCount() - 1, col, pTWI );
-            ui->tableWidget->verticalHeader()->resizeSection( ui->tableWidget->rowCount() - 1, font.pixelSize() + 40 );
+
+            int fontPixelSize = font.pixelSize();
+            ui->tableWidget->verticalHeader()->resizeSection( ui->tableWidget->rowCount() - 1, fontPixelSize + 40 );
         }
     }
 }
