@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
     // ........................................................................///
 
     width_ = -1;
+    height_ = -1;
 
     ui->downText->setReadOnly( true );
     ui->upText->setReadOnly( true );
@@ -348,6 +349,26 @@ void MainWindow::redraw( int ms )
         ui->tableWidget->horizontalHeader()->resizeSection(1, colWidth );
         ui->tableWidget->horizontalHeader()->resizeSection(2, colWidth );
         ui->tableWidget->horizontalHeader()->resizeSection(3, colWidth );
+    }
+
+    // ........................................................................
+
+    const int newHeight = ui->tableWidget->height();
+
+    if( height_ != newHeight )
+    {
+        height_ = newHeight;
+        int rowHeight = newHeight / runners_.all().size();
+
+        if( rowHeight < 40 )
+        {
+            rowHeight = 40;
+        }
+
+        for( int i = 0; i<ui->tableWidget->rowCount(); i++)
+        {
+            ui->tableWidget->verticalHeader()->resizeSection( i, rowHeight );
+        }
     }
 
     // ........................................................................
