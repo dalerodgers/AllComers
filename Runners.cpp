@@ -16,9 +16,13 @@ void Runners::add( const QString& name, const int msPredicted )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Runners::clear()
+void Runners::clear( const bool clearAll )
 {
-    //all_.clear();
+    if( clearAll )
+    {
+        all_.clear();
+    }
+
     notStarted_.clear();
     started_.clear();
     finished_.clear();
@@ -30,7 +34,7 @@ void Runners::clear()
 
 void Runners::sort()
 {
-    clear();
+    clear( false );
 
     auto iter = all_.begin();
     while( iter != all_.end() )

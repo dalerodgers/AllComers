@@ -37,6 +37,7 @@ private:
     void redraw(int ms = 0);
     void drawRow( const int row, const QBrush &background, const QString& col1, const QString& col2, const QString& col3="", const QString& col4="" );
     void addRows();
+    void setupTable();
 
 private slots:
     void onOpen();

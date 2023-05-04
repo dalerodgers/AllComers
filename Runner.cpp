@@ -103,6 +103,7 @@ void Runner::Stop( const int msElapsed )
     switch( state_ )
     {
         case State_e::WAITIING_TO_START:
+            textToSpeech_.say( name_ );
             state_ = State_e::DNS;
             break;
 
@@ -124,6 +125,9 @@ void Runner::Stop( const int msElapsed )
             break;
 
         case State_e::DNS:
+            state_ = State_e::WAITIING_TO_START;
+            break;
+
         case State_e::DNF:
         default:
             ; // do nothing
