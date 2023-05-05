@@ -186,7 +186,7 @@ void Runner::reset()
     warnings_[5].pre =  name_;
     warnings_[5].mid =  " 5";
     warnings_[5].post = "";
-    warnings_[5].time = -5000;
+    warnings_[5].time = -5300;
 
     warnings_[6].pre =  name_;
     warnings_[6].mid =  " 10 seconds";
