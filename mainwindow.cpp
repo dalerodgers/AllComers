@@ -198,8 +198,8 @@ void MainWindow::onStartStopPressed()
         ui->button_Save->setEnabled( false );
         ui->button_Add->setEnabled( false );
 
-        elapsedTimer_.start();
-        timer_.start(50);
+        msStart_ = QDateTime::currentMSecsSinceEpoch();
+        timer_.start(100);
     }
     else
     {
@@ -229,6 +229,8 @@ void MainWindow::onStartStopPressed()
 
 void MainWindow::onTimer()
 {
+    msElapsed_ = QDateTime::currentMSecsSinceEpoch() - msStart_;
+
     const unsigned int sortOfFinished = runners_.finished().size() + \
                                         runners_.dns().size() + \
                                         runners_.dnf().size();
@@ -243,7 +245,7 @@ void MainWindow::onTimer()
     }
     else
     {
-        int t = msSlowest_ - elapsedTimer_.elapsed();
+        int t = msSlowest_ - msElapsed_;
         QString s;
 
         if( msSlowest_ < 0 )
@@ -255,7 +257,7 @@ void MainWindow::onTimer()
         s += QTime( QTime(0 ,0, 0).addMSecs(t + msFUDGE) ).toString("hh:mm:ss");
         ui->downText->setText( s );
 
-        t = elapsedTimer_.elapsed() - msFUDGE;
+        t = msElapsed_ - msFUDGE;
         s.clear();
 
         if( t >= 0 )
@@ -286,7 +288,7 @@ void MainWindow::onCellPressed(int row, int column)
 
                 if( isStarted_ )
                 {
-                    iter->Stop( elapsedTimer_.elapsed() - msFUDGE );
+                    iter->Stop( msElapsed_ - msFUDGE );
                 }
                 else
                 {

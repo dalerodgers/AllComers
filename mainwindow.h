@@ -4,7 +4,6 @@
 #include <QMainWindow>
 
 #include "Runners.h"
-#include <QElapsedTimer>
 #include <QTableWidgetItem>
 #include <QTimer>
 
@@ -29,7 +28,7 @@ private:
     bool isStarted_;
     Runners runners_;
     QTimer timer_;
-    QElapsedTimer elapsedTimer_;
+    qint64 msElapsed_, msStart_;
     int msSlowest_;
     int width_;
     int height_;
