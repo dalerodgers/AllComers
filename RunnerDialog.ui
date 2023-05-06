@@ -37,7 +37,11 @@
      </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="lineEdit_name"/>
+     <widget class="QLineEdit" name="lineEdit_name">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -74,6 +78,9 @@
    <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
      <widget class="QPushButton" name="button_DNS">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="text">
        <string>Mark as DNS</string>
       </property>
@@ -94,6 +101,9 @@
     </item>
     <item>
      <widget class="QPushButton" name="button_Cancel">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="text">
        <string>Cancel</string>
       </property>
@@ -101,6 +111,9 @@
     </item>
     <item>
      <widget class="QPushButton" name="button_OK">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="text">
        <string>OK</string>
       </property>
