@@ -4,7 +4,6 @@
 #include <QMainWindow>
 
 #include "Runners.h"
-#include <QElapsedTimer>
 #include <QTableWidgetItem>
 #include <QTimer>
 
@@ -29,13 +28,15 @@ private:
     bool isStarted_;
     Runners runners_;
     QTimer timer_;
-    QElapsedTimer elapsedTimer_;
+    qint64 msElapsed_, msStart_;
     int msSlowest_;
     int width_;
+    int height_;
 
     void redraw(int ms = 0);
     void drawRow( const int row, const QBrush &background, const QString& col1, const QString& col2, const QString& col3="", const QString& col4="" );
     void addRows();
+    void setupTable();
 
 private slots:
     void onOpen();

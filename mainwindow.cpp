@@ -3,6 +3,8 @@
 
 #include <QFileDialog>
 #include <QTime>
+#include <QScroller>
+#include <QScrollBar>
 
 #include "RunnerDialog.h"
 #include "xlsxdocument.h"
@@ -35,12 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     timer_.stop();
     timer_.setSingleShot( false );
 
-    ui->tableWidget->setColumnCount( NUM_COLUMNS );
-    QStringList headers = {"Name", "Predicted", "Time", "Delta" };
-    ui->tableWidget->setHorizontalHeaderLabels( headers );
-    ui->tableWidget->verticalHeader()->hide();
-
-    width_ = -1;
+    setupTable();
 
     ui->downText->setReadOnly( true );
     ui->upText->setReadOnly( true );
@@ -51,14 +48,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->downText->setFont( font );
     ui->upText->setFont( font );
 
-    QJniObject window = QJniObject::callStaticObjectMethod( "android/view/Window",
-                                                            "getWindow",
-                                                            "()Landroid/view/Window;");
+    QJniObject activity = QNativeInterface::QAndroidApplication::context();
 
-    if (window.isValid() )
+    if (activity.isValid())
     {
-        const int FLAG_KEEP_SCREEN_ON = 128;
-        window.callObjectMethod("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        QJniObject window = activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+
+        if( window.isValid() )
+        {
+            const int FLAG_KEEP_SCREEN_ON = 128;
+            //window.callObjectMethod("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+            window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        }
     }
 #endif
 
@@ -87,7 +88,7 @@ void MainWindow::onOpen()
 
     if (xlsxR.load()) // load excel file
     {
-        runners_.clear();
+        setupTable();
 
         QXlsx::Cell* cell1;
         QXlsx::Cell* cell2;
@@ -99,10 +100,19 @@ void MainWindow::onOpen()
 
             if ( ( cell1 != nullptr ) && (cell2 != nullptr) )
             {
+                int ms;
                 QVariant name = cell1->readValue();   // read cell value (number(double), QDateTime, QString ...)
                 QVariant time = cell2->readValue();   // read cell value (number(double), QDateTime, QString ...)
 
-                const int ms = static_cast<int>( 1000.0 * time.toDouble() * 60.0 * 60.0 * 24.0 );
+                if( time.canConvert<QTime>() )
+                {
+                    const QTime eric = time.toTime();
+                    ms = abs( eric.msecsTo( QTime(0, 0, 0) ) );
+                }
+                else
+                {
+                    ms = static_cast<int>( 1000.0 * time.toDouble() * 60.0 * 60.0 * 24.0 );
+                }
 
                 runners_.add( name.toString(), ms );
             }
@@ -133,16 +143,11 @@ void MainWindow::onSave()
     {
         QXlsx::Document xlsxW( fileName );
 
-        xlsxW.write(1, 1, ui->tableWidget->horizontalHeaderItem(0)->text() );
-        xlsxW.write(1, 2, ui->tableWidget->horizontalHeaderItem(1)->text() );
-        xlsxW.write(1, 3, ui->tableWidget->horizontalHeaderItem(2)->text() );
-        xlsxW.write(1, 4, ui->tableWidget->horizontalHeaderItem(3)->text() );
-
         for( int row = 0; row < ui->tableWidget->rowCount(); row++ )
         {
             for( int col = 0; col < ui->tableWidget->columnCount(); col++ )
             {
-                xlsxW.write( row+2, col+1, QVariant( ui->tableWidget->item(row, col)->text() ) );
+                xlsxW.write( row+1, col+1, QVariant( ui->tableWidget->item(row, col)->text() ) );
             }
         }
 
@@ -193,13 +198,13 @@ void MainWindow::onStartStopPressed()
         ui->button_Save->setEnabled( false );
         ui->button_Add->setEnabled( false );
 
-        elapsedTimer_.start();
-        timer_.start(50);
+        msStart_ = QDateTime::currentMSecsSinceEpoch();
+        timer_.start(100);
     }
     else
     {
+        timer_.stop();
         isStarted_ = false;
-        ui->startStopButton->setText( "Start" );
 
         std::list<Runner>& all = runners_.all();
         auto iter = all.begin();
@@ -212,6 +217,11 @@ void MainWindow::onStartStopPressed()
 
         ui->button_Open->setEnabled( true );
         ui->button_Save->setEnabled( true );
+
+        redraw( -1 );
+
+        ui->startStopButton->setText( "Start" );
+        ui->startStopButton->setEnabled( false );
     }
 }
 
@@ -219,36 +229,15 @@ void MainWindow::onStartStopPressed()
 
 void MainWindow::onTimer()
 {
-    int t = msSlowest_ - elapsedTimer_.elapsed();
-    QString s;
-
-    if( msSlowest_ < 0 )
-    {
-        s = "-";
-        t = -t;
-    }
-
-    s += QTime( QTime(0 ,0, 0).addMSecs(t + msFUDGE) ).toString("hh:mm:ss");
-    ui->downText->setText( s );
-
-    t = elapsedTimer_.elapsed() - msFUDGE;
-    s.clear();
-
-    if( t >= 0 )
-    {
-        s = QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
-    }
-
-    ui->upText->setText( s );
-
-    redraw( t );
+    msElapsed_ = QDateTime::currentMSecsSinceEpoch() - msStart_;
 
     const unsigned int sortOfFinished = runners_.finished().size() + \
                                         runners_.dns().size() + \
                                         runners_.dnf().size();
+
     if( !isStarted_ )
     {
-        timer_.stop();
+        onStartStopPressed();
     }
     else if( sortOfFinished >= runners_.all().size() )
     {
@@ -256,7 +245,29 @@ void MainWindow::onTimer()
     }
     else
     {
-        ;   // do nothing
+        int t = msSlowest_ - msElapsed_;
+        QString s;
+
+        if( msSlowest_ < 0 )
+        {
+            s = "-";
+            t = -t;
+        }
+
+        s += QTime( QTime(0 ,0, 0).addMSecs(t + msFUDGE) ).toString("hh:mm:ss");
+        ui->downText->setText( s );
+
+        t = msElapsed_ - msFUDGE;
+        s.clear();
+
+        if( t >= 0 )
+        {
+            s = QTime( QTime(0 ,0, 0).addMSecs(t) ).toString("hh:mm:ss");
+        }
+
+        ui->upText->setText( s );
+
+        redraw( t );
     }
 }
 
@@ -277,7 +288,7 @@ void MainWindow::onCellPressed(int row, int column)
 
                 if( isStarted_ )
                 {
-                    iter->Stop( elapsedTimer_.elapsed() - msFUDGE );
+                    iter->Stop( msElapsed_ - msFUDGE );
                 }
                 else
                 {
@@ -315,17 +326,38 @@ void MainWindow::redraw( int ms )
 
     if( width_ != newWidth )
     {
-        width_ = ui->tableWidget->width();
-        ui->tableWidget->horizontalHeader()->resizeSection(0, width_ / NUM_COLUMNS );
-        ui->tableWidget->horizontalHeader()->resizeSection(1, width_ / NUM_COLUMNS );
-        ui->tableWidget->horizontalHeader()->resizeSection(2, width_ / NUM_COLUMNS );
-        ui->tableWidget->horizontalHeader()->resizeSection(3, width_ / NUM_COLUMNS );
+        width_ = newWidth;
+        const int colWidth = width_ / NUM_COLUMNS;
+
+        ui->tableWidget->horizontalHeader()->resizeSection(0, colWidth );
+        ui->tableWidget->horizontalHeader()->resizeSection(1, colWidth );
+        ui->tableWidget->horizontalHeader()->resizeSection(2, colWidth );
+        ui->tableWidget->horizontalHeader()->resizeSection(3, colWidth );
     }
+
     // ........................................................................
 
     if( !runners_.all().empty() )
     {
         ui->startStopButton->setEnabled( true );
+
+        const int newHeight = ui->tableWidget->height();
+
+        if( height_ != newHeight )
+        {
+            height_ = newHeight;
+            int rowHeight = newHeight / runners_.all().size();
+
+            if( rowHeight < 40 )
+            {
+                rowHeight = 40;
+            }
+
+            for( int i = 0; i<ui->tableWidget->rowCount(); i++)
+            {
+                ui->tableWidget->verticalHeader()->resizeSection( i, rowHeight );
+            }
+        }
     }
 
     // ........................................................................
@@ -508,9 +540,11 @@ void MainWindow::drawRow( const int row, const QBrush &background, const QString
 
 void MainWindow::addRows()
 {
-    while( ui->tableWidget->rowCount() != static_cast<int>( runners_.all().size() ) )
+    int rowCount = ui->tableWidget->rowCount();
+
+    while( rowCount != static_cast<int>( runners_.all().size() ) )
     {
-        ui->tableWidget->setRowCount( ui->tableWidget->rowCount() + 1 );
+        ui->tableWidget->setRowCount( rowCount + 1 );
 
         for( int col = 0; col < NUM_COLUMNS; col++ )
         {
@@ -536,10 +570,68 @@ void MainWindow::addRows()
 
             pTWI->setFlags( Qt::ItemIsEnabled );
 
-            ui->tableWidget->setItem( ui->tableWidget->rowCount() - 1, col, pTWI );
-            ui->tableWidget->verticalHeader()->resizeSection( ui->tableWidget->rowCount() - 1, font.pixelSize() + 40 );
+            ui->tableWidget->setItem( rowCount, col, pTWI );
+
+            int fontPixelSize = font.pixelSize();
+            ui->tableWidget->verticalHeader()->resizeSection( rowCount, fontPixelSize + 40 );
+        }
+
+        height_ = -1;
+        rowCount = ui->tableWidget->rowCount();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void MainWindow::setupTable()
+{
+    runners_.clear( true );
+
+    // ........................................................................
+
+    for( int row = 0; row < ui->tableWidget->rowCount(); row++ )
+    {
+        for( int col = 0; col < ui->tableWidget->columnCount(); col++ )
+        {
+            QTableWidgetItem* pTWI = ui->tableWidget->item( row, col );
+
+            if( nullptr != pTWI )
+            {
+                delete pTWI;
+            }
         }
     }
+
+    ui->tableWidget->clear();
+    ui->tableWidget->setRowCount( 0 );
+    ui->tableWidget->setColumnCount( 0 );
+
+    // ........................................................................
+
+    ui->tableWidget->setColumnCount( NUM_COLUMNS );
+    QStringList headers = {"Name", "Predicted", "Time", "Delta" };
+    ui->tableWidget->setHorizontalHeaderLabels( headers );
+    ui->tableWidget->verticalHeader()->hide();
+
+    // ........................................................................
+
+    ui->tableWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->tableWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->tableWidget->horizontalScrollBar()->setDisabled(true);
+    ui->tableWidget->verticalHeader()->setHidden(true);
+    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setAutoScroll(true);
+    ui->tableWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    // add a kinetic scroller
+    QScroller::grabGesture(ui->tableWidget, QScroller::LeftMouseButtonGesture);
+
+    // ........................................................................
+
+    width_ = -1;
+    height_ = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

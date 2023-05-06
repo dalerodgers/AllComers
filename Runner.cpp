@@ -103,6 +103,7 @@ void Runner::Stop( const int msElapsed )
     switch( state_ )
     {
         case State_e::WAITIING_TO_START:
+            textToSpeech_.say( name_ );
             state_ = State_e::DNS;
             break;
 
@@ -124,6 +125,9 @@ void Runner::Stop( const int msElapsed )
             break;
 
         case State_e::DNS:
+            state_ = State_e::WAITIING_TO_START;
+            break;
+
         case State_e::DNF:
         default:
             ; // do nothing
@@ -182,7 +186,7 @@ void Runner::reset()
     warnings_[5].pre =  name_;
     warnings_[5].mid =  " 5";
     warnings_[5].post = "";
-    warnings_[5].time = -5000;
+    warnings_[5].time = -5300;
 
     warnings_[6].pre =  name_;
     warnings_[6].mid =  " 10 seconds";
