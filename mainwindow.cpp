@@ -128,6 +128,8 @@ void MainWindow::onOpen()
         ui->button_Add->setEnabled( true );
         ui->startStopButton->setEnabled( true );
     }
+
+    ui->button_Open->setDown( false );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -153,6 +155,8 @@ void MainWindow::onSave()
 
         xlsxW.save();
     }
+
+    ui->button_Save->setDown( false );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -175,6 +179,8 @@ void MainWindow::onAdd()
 
     addRows();
     redraw();
+
+    ui->button_Add->setDown( false );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -562,13 +568,15 @@ void MainWindow::addRows()
             if( col > 0 )
             {
                 pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignRight);
+                pTWI->setFlags( Qt::NoItemFlags );
             }
             else
             {
                 pTWI->setTextAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+                pTWI->setFlags( Qt::ItemIsEnabled );
             }
 
-            pTWI->setFlags( Qt::ItemIsEnabled );
+
 
             ui->tableWidget->setItem( rowCount, col, pTWI );
 
