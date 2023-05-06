@@ -56,13 +56,25 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <widget class="QSpinBox" name="spinBox_hours"/>
+     <widget class="QComboBox" name="comboBox_Hours">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+     </widget>
     </item>
     <item>
-     <widget class="QSpinBox" name="spinBox_mins"/>
+     <widget class="QComboBox" name="comboBox_Mins">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+     </widget>
     </item>
     <item>
-     <widget class="QSpinBox" name="spinBox_secs"/>
+     <widget class="QComboBox" name="comboBox_Secs">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

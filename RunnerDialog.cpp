@@ -31,9 +31,9 @@ RunnerDialog::RunnerDialog(Runners* runners, Runner* runner, QWidget *parent) :
         const int mins  = ( totalSecs - (hours * 3600) ) / 60;
         const int secs  = totalSecs - (hours * 3600) - (mins*60);
 
-        ui->spinBox_hours->setValue( hours );
-        ui->spinBox_mins->setValue( mins );
-        ui->spinBox_secs->setValue( secs );
+        ui->comboBox_Hours->setCurrentIndex( hours );
+        ui->comboBox_Mins->setCurrentIndex( mins );
+        ui->comboBox_Secs->setCurrentIndex( secs );
 
         if( runner_->state() == Runner::State_e::DNS )
         {
@@ -66,14 +66,25 @@ RunnerDialog::~RunnerDialog()
 
 void RunnerDialog::setRanges()
 {
-    ui->spinBox_hours->setRange( 0, 2 );
-    ui->spinBox_hours->setValue( 0 );
+    ui->comboBox_Hours->addItem( "0" );
+    ui->comboBox_Hours->addItem( "1" );
 
-    ui->spinBox_mins->setRange( 0, 59 );
-    ui->spinBox_mins->setValue( 30 );
+    for( int i=0; i<60; i++ )
+    {
+        QString str = QString( "%1" ).arg( i );
 
-    ui->spinBox_secs->setRange( 0, 59 );
-    ui->spinBox_secs->setValue( 0 );
+        if( i < 10 )
+        {
+            str = "0" + str;
+        }
+
+        ui->comboBox_Mins->addItem( str );
+        ui->comboBox_Secs->addItem( str );
+    }
+
+    ui->comboBox_Hours->setCurrentIndex( 0 );
+    ui->comboBox_Mins->setCurrentIndex( 30 );
+    ui->comboBox_Secs->setCurrentIndex( 0 );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -87,9 +98,9 @@ void RunnerDialog::onCancel()
 
 void RunnerDialog::onOk()
 {
-    const int time =  ( ( ui->spinBox_hours->value() * 60 * 60 ) + \
-                        ( ui->spinBox_mins->value() * 60 ) + \
-                          ui->spinBox_secs->value() ) * 1000;
+    const int time =  ( ( ui->comboBox_Hours->currentIndex() * 60 * 60 ) + \
+                        ( ui->comboBox_Mins->currentIndex() * 60 ) + \
+                          ui->comboBox_Secs->currentIndex() ) * 1000;
 
     if( nullptr != runners_ )
     {
@@ -128,3 +139,5 @@ void RunnerDialog::onMarkAsDNS()
         close();
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
