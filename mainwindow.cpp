@@ -576,8 +576,6 @@ void MainWindow::addRows()
                 pTWI->setFlags( Qt::ItemIsEnabled );
             }
 
-
-
             ui->tableWidget->setItem( rowCount, col, pTWI );
 
             int fontPixelSize = font.pixelSize();
