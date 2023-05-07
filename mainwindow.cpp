@@ -7,6 +7,7 @@
 #include <QScrollBar>
 
 #include "RunnerDialog.h"
+#include "Vibrate.h"
 #include "xlsxdocument.h"
 
 #ifdef Q_OS_ANDROID
@@ -188,6 +189,7 @@ void MainWindow::onAdd()
 void MainWindow::onStartStopPressed()
 {
     qDebug() << "onStartStopPressed";
+    Vibrate::start( 500 );
 
     if( runners_.all().size() == 0 )
     {

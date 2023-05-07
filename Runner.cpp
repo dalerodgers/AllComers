@@ -1,5 +1,6 @@
 #include "Runner.h"
 #include <QTextToSpeech>
+#include "Vibrate.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -52,6 +53,7 @@ void Runner::newTime( const int msTime )
             if( msTime < ( p->time + 1500 ) )
             {
                 textToSpeech_.say( p->pre + p->mid + p->post );
+                Vibrate::start( 500 );
             }
 
             p->time = WARNING_DISABLED;
@@ -104,6 +106,8 @@ void Runner::Stop( const int msElapsed )
     {
         case State_e::WAITIING_TO_START:
             textToSpeech_.say( name_ );
+            Vibrate::start( 500 );
+
             state_ = State_e::DNS;
             break;
 
@@ -113,6 +117,7 @@ void Runner::Stop( const int msElapsed )
                 state_ = State_e::FINISHED;
                 msFinished_ = msElapsed;
                 textToSpeech_.say( name_ );
+                Vibrate::start( 500 );
             }
             else
             {

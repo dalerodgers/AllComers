@@ -18,6 +18,7 @@ SOURCES += \
     Runner.cpp \
     RunnerDialog.cpp \
     Runners.cpp \
+    Vibrate.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -26,6 +27,7 @@ HEADERS += \
     RunnerDialog.h \
     RunnerWidget.h \
     Runners.h \
+    Vibrate.h \
     mainwindow.h
 
 FORMS += \
