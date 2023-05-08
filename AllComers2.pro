@@ -18,6 +18,7 @@ SOURCES += \
     Runner.cpp \
     RunnerDialog.cpp \
     Runners.cpp \
+    Vibrate.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -26,6 +27,7 @@ HEADERS += \
     RunnerDialog.h \
     RunnerWidget.h \
     Runners.h \
+    Vibrate.h \
     mainwindow.h
 
 FORMS += \
@@ -50,4 +52,5 @@ DISTFILES += \
 contains(ANDROID_TARGET_ARCH,arm64-v8a) {
     ANDROID_PACKAGE_SOURCE_DIR = \
         $$PWD/android
+    DEFINES += VIBRATE
 }
