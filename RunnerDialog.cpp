@@ -98,6 +98,8 @@ void RunnerDialog::onCancel()
 
 void RunnerDialog::onOk()
 {
+    QApplication::inputMethod()->commit();
+
     const int time =  ( ( ui->comboBox_Hours->currentIndex() * 60 * 60 ) + \
                         ( ui->comboBox_Mins->currentIndex() * 60 ) + \
                           ui->comboBox_Secs->currentIndex() ) * 1000;
