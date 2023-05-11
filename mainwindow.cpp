@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->button_Save->setEnabled( false );
 
     connect( ui->button_Add, SIGNAL(pressed()), this, SLOT(onAdd()) );
+    ui->button_Add->setEnabled( false );
 
     connect( ui->startStopButton, SIGNAL(pressed()), this, SLOT(onStartStopPressed()) );
     ui->startStopButton->setEnabled( false );
@@ -115,7 +116,10 @@ void MainWindow::onOpen()
                     ms = static_cast<int>( 1000.0 * time.toDouble() * 60.0 * 60.0 * 24.0 );
                 }
 
-                runners_.add( name.toString(), ms );
+                if( !name.toString().isEmpty() )
+                {
+                    runners_.add( name.toString(), ms );
+                }
             }
 
             row++;
