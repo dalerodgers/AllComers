@@ -300,7 +300,14 @@ void MainWindow::onCellPressed(int row, int column)
 
                 if( isStarted_ )
                 {
-                    iter->Stop( msElapsed_ - msFUDGE );
+                    if( iter->state() == Runner::State_e::DNS )
+                    {
+                        iter->reset();
+                    }
+                    else
+                    {
+                        iter->Stop( msElapsed_ - msFUDGE );
+                    }
                 }
                 else
                 {

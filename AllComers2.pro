@@ -25,7 +25,6 @@ SOURCES += \
 HEADERS += \
     Runner.h \
     RunnerDialog.h \
-    RunnerWidget.h \
     Runners.h \
     Vibrate.h \
     mainwindow.h
